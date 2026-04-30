@@ -1,0 +1,86 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model data {
+  codSta     String   @db.VarChar(20)
+  ts         BigInt   @db.UnsignedBigInt
+  pulsos     Int      @default(0)
+  tempAvg    Float?
+  preAvg     Float?
+  umiAvg     Float?
+  lumAvg     Float?
+  vvAvg      Float?
+  dv         Float?
+  created_at DateTime @default(now())
+  sta        sta      @relation(fields: [codSta], references: [codSta], onDelete: Cascade, map: "fk_data_sta")
+
+  @@id([codSta, ts])
+  @@index([codSta, ts], map: "idx_data_codSta_ts")
+}
+
+model session {
+  id           String   @id @db.VarChar(255)
+  sessionToken String   @unique(map: "uq_session_sessionToken") @db.VarChar(255)
+  userId       String   @db.VarChar(255)
+  expires      DateTime
+  created_at   DateTime @default(now())
+  updated_at   DateTime @default(now())
+  usuario      usuario  @relation(fields: [userId], references: [codUsr], onDelete: Cascade, map: "fk_session_user")
+
+  @@index([expires], map: "idx_session_expires")
+  @@index([userId], map: "idx_session_userId")
+}
+
+model sta {
+  codSta     String   @id @db.VarChar(20)
+  nomeSta    String   @db.VarChar(120)
+  aliasSta   String?  @db.VarChar(120)
+  latSta     Decimal? @db.Decimal(9, 6)
+  longSta    Decimal? @db.Decimal(9, 6)
+  resSta     Decimal? @db.Decimal(10, 6)
+  perSta     Int      @default(900) @db.UnsignedInt
+  hasPulsos  Boolean  @default(true)
+  hasTemp    Boolean  @default(true)
+  hasPressao Boolean  @default(true)
+  hasUmidade Boolean  @default(true)
+  hasLum     Boolean  @default(true)
+  hasVent    Boolean  @default(true)
+  hasDv      Boolean  @default(false)
+  is_public  Boolean  @default(false)
+  isActive   Boolean  @default(true)
+  hasImage   Boolean  @default(false)
+  codUsr     String   @db.VarChar(255)
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now())
+  data       data[]
+  usuario    usuario  @relation(fields: [codUsr], references: [codUsr], map: "fk_sta_usuario")
+
+  @@index([codUsr], map: "idx_sta_codUsr")
+  @@index([is_public], map: "idx_sta_public")
+}
+
+model usuario {
+  codUsr     String       @id @db.VarChar(255)
+  emailUsr   String       @unique(map: "uq_usuario_email") @db.VarChar(255)
+  nomeUsr    String?      @db.VarChar(255)
+  pwdUsr     String       @db.VarChar(255)
+  role       usuario_role @default(user)
+  created_at DateTime     @default(now())
+  updated_at DateTime     @default(now())
+  latMap     Decimal?     @db.Decimal(10, 7)
+  longMap    Decimal?     @db.Decimal(10, 7)
+  zoomMap    Decimal?     @db.Decimal(10, 7)
+  session    session[]
+  sta        sta[]
+}
+
+enum usuario_role {
+  admin
+  user
+}

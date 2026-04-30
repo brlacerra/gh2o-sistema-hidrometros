@@ -1,0 +1,12 @@
+@import "tailwindcss";
+
+body {
+  @apply bg-white;
+}
+
+:root {
+  --app-navbar-h: 96px;
+  /* fallback inicial */
+  --color-gh2oblue: rgb(33, 137, 177);
+  --color-gh2ogreen: rgb(69, 157, 82);
+}

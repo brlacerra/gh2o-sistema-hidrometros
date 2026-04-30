@@ -1,0 +1,67 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Cli {
+  codCli   String  @id @db.VarChar(5)
+  nomeCli  String? @db.VarChar(50)
+  emailCli String? @db.VarChar(50)
+  telCli   String? @db.VarChar(11)
+  Sta      Sta[]
+  Usr      Usr[]
+}
+
+model Data {
+  codSta  String @db.VarChar(6)
+  ts      BigInt
+  pulsos  Int?
+  tempAvg Float? @db.Float
+  tempMin Float? @db.Float
+  tempMax Float? @db.Float
+  preAvg  Float? @db.Float
+  preMin  Float? @db.Float
+  preMax  Float? @db.Float
+  umiAvg  Float? @db.Float
+  umiMin  Float? @db.Float
+  umiMax  Float? @db.Float
+  lumAvg  Float? @db.Float
+  lumMin  Float? @db.Float
+  lumMax  Float? @db.Float
+  vvAvg   Float? @db.Float
+  vvMin   Float? @db.Float
+  vvMax   Float? @db.Float
+  dv      Int?
+
+  @@id([codSta, ts])
+}
+
+model Sta {
+  codSta    String  @id @db.VarChar(6)
+  nomeSta   String? @db.VarChar(50)
+  aliasSta  String? @db.VarChar(15)
+  codCliSta String? @db.VarChar(5)
+  latSta    Float?  @db.Float
+  longSta   Float?  @db.Float
+  resSta    Float?  @db.Float
+  perSta    Int?
+  ctlSta    Int?    @db.UnsignedTinyInt
+  Cli       Cli?    @relation(fields: [codCliSta], references: [codCli], onDelete: NoAction, onUpdate: NoAction, map: "Sta_ibfk_1")
+
+  @@index([codCliSta], map: "codCliSta")
+}
+
+model Usr {
+  codUsr    String   @id @db.VarChar(5)
+  pwdUsr    String?  @db.VarChar(60)
+  codCliUsr String?  @db.VarChar(5)
+  emailUsr  String?  @db.VarChar(50)
+  chgPwdUsr Boolean?
+  Cli       Cli?     @relation(fields: [codCliUsr], references: [codCli], onDelete: NoAction, onUpdate: NoAction, map: "Usr_ibfk_1")
+
+  @@index([codCliUsr], map: "codCliUsr")
+}
