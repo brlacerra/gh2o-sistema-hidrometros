@@ -16,12 +16,6 @@ export type StationApiItem = {
   latestData: null | {
     codSta: string;
     ts: string;
-    pulsos: number | null;
-    tempAvg: number | null;
-    preAvg: number | null;
-    umiAvg: number | null;
-    lumAvg: number | null;
-    vvAvg: number | null;
   };
 };
 
@@ -39,12 +33,7 @@ export function stationsToPontos(stations: StationApiItem[]): Ponto[] {
       is_public: s.is_public,
       isActive: s.isActive,
 
-      temperatura: s.latestData?.tempAvg ?? undefined,
-      umidade: s.latestData?.umiAvg ?? undefined,
-      pressaoAt: s.latestData?.preAvg ?? undefined,
-      luminosidade: s.latestData?.lumAvg ?? undefined,
       ultimaLeitura: tempoToDate(s.latestData?.ts),
-      chuva24h: s.latestData?.pulsos ?? undefined,
     }));
 }
 
@@ -60,8 +49,8 @@ export function healthFromLastReading(
   const diffMs = now.getTime() - last.getTime();
   const diffMin = diffMs / 60000;
 
-  if (diffMin <= 20) return "ok";     // até 15 min
-  if (diffMin <= 600) return "warn";   // 15-600 min
+  if (diffMin <= 60) return "ok";     // até 15 min
+  if (diffMin > 60) return "warn";   // 15-600 min
 
   return "offline";                      // > 600 min
 }

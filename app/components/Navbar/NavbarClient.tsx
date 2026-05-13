@@ -80,14 +80,11 @@ export function NavbarClient({ title }: NavbarProps) {
     window.location.href = "/";
   }
 
-  async function goToStationCreation() {
-    router.push("/admin/stations/new");
+  async function goToHidrometerCreation() {
+    router.push("/admin/hidrometro/new");
   }
-  async function goToStationChange() {
-    router.push("/admin/stations/edit");
-  }
-  async function goToStationOverview() {
-    router.push("/overview");
+  async function goToHidrometerChange() {
+    router.push("/admin/hidrometro/edit");
   }
 
   const normalizedTitle = (title ?? "").toLowerCase();
@@ -171,17 +168,6 @@ export function NavbarClient({ title }: NavbarProps) {
                     <FontAwesomeIcon icon={faUser} className="text-lg text-slate-500" />
                     Conta
                   </button>
-                  <button
-                    type="button"
-                    className="hidden lg:block w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center gap-3"
-                    onClick={() => {
-                      setOpen(false);
-                      goToStationOverview();
-                    }}
-                  >
-                    <FontAwesomeIcon icon={faChartBar} className="text-lg text-slate-500" />
-                    Visualizar estações
-                  </button>
                   {me.role === "admin" ? (
                     <>
                       <button
@@ -189,22 +175,22 @@ export function NavbarClient({ title }: NavbarProps) {
                         className="block w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center gap-3"
                         onClick={() => {
                           setOpen(false);
-                          goToStationCreation();
+                          goToHidrometerCreation();
                         }}
                       >
                         <FontAwesomeIcon icon={faPlus} className="text-lg text-slate-500" />
-                        Criar estação
+                        Criar hidrômetro
                       </button>
                       <button
                         type="button"
                         className="block w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center gap-3"
                         onClick={() => {
                           setOpen(false);
-                          goToStationChange();
+                          goToHidrometerChange();
                         }}
                       >
                         <FontAwesomeIcon icon={faPenToSquare} className="text-lg text-slate-500" />
-                        Editar estação
+                        Editar hidrômetro
                       </button>
 
                     </>

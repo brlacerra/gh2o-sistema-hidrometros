@@ -10,11 +10,6 @@ export interface Ponto {
   is_public?: boolean;
   isActive?: boolean;
 
-  chuva24h?: number;
-  luminosidade?: number;
-  pressaoAt?: number;
-  temperatura?: number;
-  umidade?: number;
   codUsr?: string;
 }
 

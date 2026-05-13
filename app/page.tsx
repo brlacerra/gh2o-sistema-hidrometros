@@ -21,8 +21,8 @@ export default function HomePage() {
     let cancelled = false;
 
     async function loadStations() {
-      const res = await fetch("/api/stations", { cache: "no-store" });
-      if (!res.ok) throw new Error("Failed to fetch /api/stations");
+      const res = await fetch("/api/hidrometros", { cache: "no-store" });
+      if (!res.ok) throw new Error("Failed to fetch /api/hidrometros");
       const json = (await res.json()) as StationsApiResponse;
 
       if (cancelled) return;
@@ -56,10 +56,10 @@ export default function HomePage() {
         focusPonto={focusPonto}
       />
 
-      <NavbarClient title="Sistema de gerenciamento" />
+      <NavbarClient title="Sistema de Monitoramento de Hidrômetros" />
 
       <LeftFilters
-        allPoints={pontos} // aqui antes era PONTOS_MOCK
+        allPoints={pontos}
         searchTerm={searchTerm}
         onSearchTermChange={setSearchTerm}
         onSelectPonto={ponto => {

@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Sistema de Gerenciamento GH2O",
-  description: "Sistema de Gerenciamento GH2O",
+  title: "Monitoramento de Hidrômetros ATGH2O",
+  description: "Monitoramento de Hidrômetros ATGH2O",
 };
 
 export default function RootLayout({
