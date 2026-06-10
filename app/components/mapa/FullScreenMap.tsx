@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Map, { Marker, MapRef } from "react-map-gl/maplibre";
+import Map, { Marker, MapRef, Source, Layer } from "react-map-gl/maplibre";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCloudSunRain, faExclamationTriangle, faLocationCrosshairs } from "@fortawesome/free-solid-svg-icons";
+import { faClock, faExclamationTriangle, faLocationCrosshairs } from "@fortawesome/free-solid-svg-icons";
 import { type Ponto } from "@/lib/utils";
-import { healthFromLastReading, ReadingHealth } from "@/lib/mappers/stationToPonto";
+import { healthFromLastReading, ReadingHealth } from "@/lib/mappers/hidroToPontos";
 
 
 interface FullScreenMapProps {
@@ -29,6 +29,11 @@ type meResponse = {
     latMap: number | null;
     longMap: number | null;
     zoomMap: number | null;
+    propriedade?: Array<{
+      centroLat: number | null;
+      centroLng: number | null;
+      geojsonProp: any;
+    }>;
   }
 }
 
@@ -78,7 +83,7 @@ function IconByTipo({
       style={style}
       className={`relative flex items-center justify-center drop-shadow-md ${colorClass(health, selected)}`}
     >
-      <FontAwesomeIcon icon={faCloudSunRain} />
+      <FontAwesomeIcon icon={faClock} />
       {health === "unActive" && (
         <div
           className="absolute text-yellow-600 drop-shadow-lg"
@@ -103,6 +108,7 @@ export default function FullScreenMap({
 }: FullScreenMapProps) {
   const [viewState, setViewState] = useState({ ...defmapProps });
   const [initialView, setInitialView] = useState({ ...defmapProps });
+  const [propertyGeojson, setPropertyGeojson] = useState<any>(null);
   const mapRef = useRef<MapRef | null>(null);
   const lastFocusedIdRef = useRef<string | null>(null);
   const maptilerKey = process.env.NEXT_PUBLIC_MAPTILER_KEY;
@@ -140,16 +146,31 @@ export default function FullScreenMap({
 
         if (cancelled) return;
 
-        const nextView = {
-          latitude: user?.latMap ?? defmapProps.latitude,
-          longitude: user?.longMap ?? defmapProps.longitude,
-          zoom: user?.zoomMap ?? defmapProps.zoom,
-        };
+        let nextView = { ...defmapProps };
+        const prop = user?.propriedade?.[0];
+
+        if (prop && prop.centroLat !== null && prop.centroLng !== null) {
+          nextView = {
+            latitude: Number(prop.centroLat),
+            longitude: Number(prop.centroLng),
+            zoom: 10,
+          };
+          if (prop.geojsonProp) {
+            setPropertyGeojson(prop.geojsonProp);
+          }
+        } else if (user?.latMap !== null && user?.longMap !== null && user?.latMap !== undefined && user?.longMap !== undefined) {
+          nextView = {
+            latitude: Number(user.latMap),
+            longitude: Number(user.longMap),
+            zoom: Number(user?.zoomMap ?? defmapProps.zoom),
+          };
+        }
+
         setInitialView(nextView);
 
         mapRef.current?.flyTo({
           center: [nextView.longitude, nextView.latitude],
-          zoom: Math.max(nextView.zoom),
+          zoom: nextView.zoom,
           essential: true,
           duration: 2000,
         });
@@ -196,8 +217,29 @@ export default function FullScreenMap({
         onMove={evt => setViewState(evt.viewState)}
         style={{ width: "100%", height: "100%" }}
         mapLib={maplibregl}
-        mapStyle={`https://api.maptiler.com/maps/satellite-v4/style.json?key=${maptilerKey}`}
+        mapStyle={`https://api.maptiler.com/maps/hybrid-v4/style.json?key=${maptilerKey}`}
       >
+        {propertyGeojson && (
+          <Source id="propriedade-source" type="geojson" data={propertyGeojson}>
+            <Layer
+              id="propriedade-fill"
+              type="fill"
+              paint={{
+                "fill-color": "#eab308",
+                "fill-opacity": 0.15,
+              }}
+            />
+            <Layer
+              id="propriedade-line"
+              type="line"
+              paint={{
+                "line-color": "#ca8a04",
+                "line-width": 2,
+                "line-opacity": 0.8,
+              }}
+            />
+          </Source>
+        )}
 
         {pontos.map(ponto => (
           <Marker
@@ -207,7 +249,7 @@ export default function FullScreenMap({
             anchor="center"
           >
             <button
-              title={ponto.nome}
+              title={ponto.descricao ?? ""}
               onClick={e => {
                 e.stopPropagation();
                 onSelectPonto(ponto);
@@ -216,7 +258,7 @@ export default function FullScreenMap({
               <IconByTipo
                 size={iconSize}
                 selected={selectedPonto?.id === ponto.id}
-                health={healthFromLastReading(ponto.ultimaLeitura, ponto.isActive)}
+                health={healthFromLastReading(ponto.isActive)}
               />
             </button>
           </Marker>

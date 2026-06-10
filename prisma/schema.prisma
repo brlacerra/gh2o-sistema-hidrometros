@@ -21,23 +21,81 @@ model session {
 }
 
 model usuario {
-  codUsr          String       @id @db.VarChar(255)
-  emailUsr        String       @unique(map: "uq_usuario_email") @db.VarChar(255)
-  nomeUsr         String?      @db.VarChar(255)
-  pwdUsr          String       @db.VarChar(255)
-  numero          String?      @db.VarChar(20)
-  role            usuario_role @default(user)
-  limNotificacoes Int?         @default(3)
-  created_at      DateTime     @default(now())
-  updated_at      DateTime     @default(now())
-  latMap          Decimal?     @db.Decimal(10, 7)
-  longMap         Decimal?     @db.Decimal(10, 7)
-  zoomMap         Decimal?     @db.Decimal(10, 7)
-  telegramChatId  String?      @db.VarChar(50)
+  codUsr          String        @id @db.VarChar(255)
+  emailUsr        String        @unique(map: "uq_usuario_email") @db.VarChar(255)
+  nomeUsr         String?       @db.VarChar(255)
+  pwdUsr          String        @db.VarChar(255)
+  numero          String?       @db.VarChar(20)
+  role            usuario_role  @default(user)
+  limNotificacoes Int?          @default(3)
+  created_at      DateTime      @default(now())
+  updated_at      DateTime      @default(now())
+  latMap          Decimal?      @db.Decimal(10, 7)
+  longMap         Decimal?      @db.Decimal(10, 7)
+  zoomMap         Decimal?      @db.Decimal(10, 7)
+  telegramChatId  String?       @db.VarChar(50)
+  cpfUsr          String?       @unique(map: "cpfUsr") @db.VarChar(20)
+  cepUsr          String?       @db.VarChar(9)
+  ufUsr           String?       @db.VarChar(2)
+  cidadeUsr       String?       @db.VarChar(100)
+  logradouroUsr   String?       @db.VarChar(255)
+  propriedade     propriedade[]
   session         session[]
+}
+
+model hidrometro {
+  codHidr       String      @id @db.VarChar(255)
+  descricao     String?     @db.VarChar(255)
+  isActive      Boolean     @default(true)
+  is_public     Boolean     @default(false)
+  latHidr       Decimal?    @db.Decimal(10, 7)
+  longHidr      Decimal?    @db.Decimal(10, 7)
+  propriedadeId String      @db.VarChar(255)
+  created_at    DateTime    @default(now())
+  updated_at    DateTime    @default(now())
+  propriedade   propriedade @relation(fields: [propriedadeId], references: [codProp], onDelete: Cascade, onUpdate: NoAction, map: "fk_hidr_propriedade")
+  outorga       outorga[]
+
+  @@index([propriedadeId], map: "idx_hidrometro_propriedadeId")
+}
+
+model outorga {
+  codOutorg        String     @id @db.VarChar(255)
+  numeroPortaria   String?    @db.VarChar(100)
+  dataEmissao      DateTime?  @db.Date
+  dataVencimento   DateTime?  @db.Date
+  lim_dias         Int
+  lim_accum_diario Float
+  ativo            Boolean    @default(true)
+  hidrometroId     String     @db.VarChar(255)
+  created_at       DateTime   @default(now())
+  updated_at       DateTime   @default(now())
+  hidrometro       hidrometro @relation(fields: [hidrometroId], references: [codHidr], onDelete: Cascade, onUpdate: NoAction, map: "fk_outorga_hidrometro")
+
+  @@index([hidrometroId], map: "idx_outorga_hidrometroId")
+  @@index([hidrometroId, ativo], map: "idx_outorga_hidrometro_ativo")
+}
+
+model propriedade {
+  codProp     String       @id @db.VarChar(255)
+  nomeProp    String       @db.VarChar(255)
+  cidadeProp  String?      @db.VarChar(100)
+  ufProp      String?      @db.VarChar(2)
+  geojsonProp Json?
+  centroLng   Decimal?     @db.Decimal(10, 7)
+  centroLat   Decimal?     @db.Decimal(10, 7)
+  usuarioId   String       @db.VarChar(255)
+  created_at  DateTime     @default(now())
+  updated_at  DateTime     @default(now())
+  hidrometro  hidrometro[]
+  usuario     usuario      @relation(fields: [usuarioId], references: [codUsr], onDelete: Cascade, onUpdate: NoAction, map: "fk_prop_usuario")
+
+  @@index([usuarioId], map: "idx_propriedade_usuarioId")
 }
 
 enum usuario_role {
   admin
   user
+  owner_no_login
+  viewer
 }

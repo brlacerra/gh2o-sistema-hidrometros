@@ -6,7 +6,7 @@ import { Ponto } from "@/lib/utils";
 import { NavbarClient } from "@/app/components/Navbar/NavbarClient";
 import { LeftFilters } from "@/app/components/mapa/LeftFilters/LeftFilters";
 import { RightSidebar } from "@/app/components/mapa/RightSideBar/RightSideBar";
-import { stationsToPontos, type StationsApiResponse } from "@/lib/mappers/stationToPonto";
+import { hidrometrosToPontos, type HidroApiResponse } from "@/lib/mappers/hidroToPontos";
 
 
 
@@ -20,16 +20,16 @@ export default function HomePage() {
   useEffect(() => {
     let cancelled = false;
 
-    async function loadStations() {
+    async function loadHidrometros() {
       const res = await fetch("/api/hidrometros", { cache: "no-store" });
       if (!res.ok) throw new Error("Failed to fetch /api/hidrometros");
-      const json = (await res.json()) as StationsApiResponse;
+      const json = (await res.json()) as HidroApiResponse;
 
       if (cancelled) return;
-      setPontos(stationsToPontos(json.data));
+      setPontos(hidrometrosToPontos(json.data));
     }
 
-    loadStations().catch(console.error);
+    loadHidrometros().catch(console.error);
 
     return () => {
       cancelled = true;
@@ -41,7 +41,7 @@ export default function HomePage() {
 
     return pontos.filter(p => {
       if (!term) return true;
-      return p.nome.toLowerCase().includes(term) || p.id.toLowerCase().includes(term);
+      return p.descricao?.toLowerCase().includes(term) || p.id.toLowerCase().includes(term);
     });
   }, [pontos, searchTerm]);
 

@@ -24,7 +24,7 @@ export function LeftFilters({
     const term = searchTerm.trim().toLowerCase();
     if (!term) return [];
     return allPoints.filter(p =>
-      `${p.nome} ${p.id}`.toLowerCase().includes(term),
+      `${p.descricao || ""}_${p.id}`.toLowerCase().includes(term),
     );
   }, [allPoints, searchTerm]);
 
@@ -82,7 +82,7 @@ export function LeftFilters({
                       >
                         <div className="flex justify-between items-center gap-2">
                           <span className="font-semibold truncate">
-                            {p.nome}
+                            {p.descricao || "Sem descrição"}
                           </span>
                           <span className="text-[10px] text-slate-500">
                             {p.tipo}

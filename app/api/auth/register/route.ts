@@ -7,6 +7,12 @@ type RegisterBody = {
   email?: string;
   password?: string;
   passwordConfirm?: string;
+  numero?: string;
+  cpfUsr?: string;
+  cepUsr?: string;
+  ufUsr?: string;
+  cidadeUsr?: string;
+  logradouroUsr?: string;
 };
 
 async function generateUniqueUserId() {
@@ -60,6 +66,12 @@ export async function POST(req: Request) {
       emailUsr: email,
       nomeUsr: nome,
       pwdUsr: hash,
+      numero: body.numero,
+      cpfUsr: body.cpfUsr,
+      cepUsr: body.cepUsr,
+      ufUsr: body.ufUsr,
+      cidadeUsr: body.cidadeUsr,
+      logradouroUsr: body.logradouroUsr,
       // latMap, longMap, zoomMap default null
       // role padrão é 'user' (PRISMA já define isso)
     }

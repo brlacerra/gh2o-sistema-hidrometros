@@ -1,16 +1,17 @@
-export type PontoTipo = "estacao";
+export type PontoTipo = "estacao" | "hidrometro";
 
 export interface Ponto {
   id: string;
   tipo: PontoTipo;
+  descricao: string | null;
   latitude: number;
   longitude: number;
-  nome: string;
-  ultimaLeitura?: Date;
   is_public?: boolean;
   isActive?: boolean;
-
-  codUsr?: string;
+  nomePropriedade?: string | null;
+  outorgaNumero?: string | null;
+  outorgaVencimento?: Date | null;
+  limiteDiario?: number | null;
 }
 
 export function tempoToDate(epochString?: string | null): Date | undefined {

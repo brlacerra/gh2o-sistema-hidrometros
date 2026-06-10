@@ -6,35 +6,13 @@ import { useRouter } from "next/navigation";
 
 
 
-type Rain24hState =
-  | { status: "idle" }
-  | { status: "loading" }
-  | { status: "ready"; mm: number }
-  | { status: "error"; message: string };
-
-async function fetchRain24hMm(codSta: string): Promise<number> {
-  const res = await fetch(`/api/stations/${codSta}/series/rain24h`, {
-    cache: "no-store",
-  });
-
-  if (!res.ok) {
-    const txt = await res.text().catch(() => "");
-    throw new Error(`HTTP ${res.status}: ${txt}`);
-  }
-
-  const json = await res.json();
-  return Number(json?.accumMm ?? 0);
-}
-
 interface RightSidebarProps {
   pontoSelecionado: Ponto | null;
   onClearSelection: () => void;
 }
 
 export function RightSidebar({ pontoSelecionado, onClearSelection }: RightSidebarProps) {
-  const [rain24h, setRain24h] = useState<Rain24hState>({ status: "idle" });
   const [isAdmin, setIsAdmin] = useState(false);
-  const reqIdRef = useRef(0);
 
   useEffect(() => {
     fetch("/api/auth/me", { credentials: "include" })
@@ -47,33 +25,10 @@ export function RightSidebar({ pontoSelecionado, onClearSelection }: RightSideba
       .catch(() => { });
   }, []);
 
-  useEffect(() => {
-    const p = pontoSelecionado;
-
-    if (!p) {
-      setRain24h({ status: "idle" });
-      return;
-    }
-
-    const codSta = p.id;
-
-    const myReqId = ++reqIdRef.current;
-    setRain24h({ status: "loading" });
-
-    fetchRain24hMm(codSta)
-      .then((mm) => {
-        if (reqIdRef.current !== myReqId) return; // evita race condition
-        setRain24h({ status: "ready", mm });
-      })
-      .catch((err) => {
-        if (reqIdRef.current !== myReqId) return;
-        setRain24h({ status: "error", message: err?.message ?? "Erro ao buscar chuva 24h" });
-      });
-  }, [pontoSelecionado?.id]);
   return (
     <>
-      <DesktopSidebar pontoSelecionado={pontoSelecionado} rain24h={rain24h} onClearSelection={onClearSelection} isAdmin={isAdmin} />
-      <MobileBottomSheet pontoSelecionado={pontoSelecionado} rain24h={rain24h} onClearSelection={onClearSelection} isAdmin={isAdmin} />
+      <DesktopSidebar pontoSelecionado={pontoSelecionado} onClearSelection={onClearSelection} isAdmin={isAdmin} />
+      <MobileBottomSheet pontoSelecionado={pontoSelecionado} onClearSelection={onClearSelection} isAdmin={isAdmin} />
     </>
   );
 }
@@ -81,13 +36,11 @@ export function RightSidebar({ pontoSelecionado, onClearSelection }: RightSideba
 
 function DesktopSidebar({
   pontoSelecionado,
-  rain24h,
   onClearSelection,
   isAdmin,
 }: {
   pontoSelecionado: Ponto | null;
   onClearSelection: () => void;
-  rain24h?: Rain24hState;
   isAdmin: boolean;
 }) {
   const router = useRouter();
@@ -105,7 +58,7 @@ function DesktopSidebar({
     <aside className="hidden md:block absolute right-4 top-38 w-80 bg-white/95 shadow-lg p-4 z-10 border border-slate-200">
       <Header ponto={p} />
       <BasicInfo ponto={p} />
-      <DetailsByTipo ponto={p} rain24h={rain24h} isAdmin={isAdmin} />
+      <DetailsByTipo ponto={p} isAdmin={isAdmin} />
 
       <div className="mt-3 flex items-center justify-end gap-2">
         {!isBlocked && (
@@ -134,12 +87,10 @@ function DesktopSidebar({
 
 function MobileBottomSheet({
   pontoSelecionado,
-  rain24h,
   onClearSelection,
   isAdmin,
 }: {
   pontoSelecionado: Ponto | null;
-  rain24h?: Rain24hState;
   onClearSelection: () => void;
   isAdmin: boolean;
 }) {
@@ -328,13 +279,13 @@ function MobileBottomSheet({
         <div className="px-4 pb-6 overflow-hidden max-h-[90vh] text-slate-900 touch-none select-none">
           {!p ? (
             <p className="text-xs text-slate-600">
-              Selecione um sensor no mapa para ver os detalhes.
+              Selecione um hidrômetro no mapa para ver os detalhes.
             </p>
           ) : (
             <>
               <Header ponto={p} />
               <BasicInfo ponto={p} />
-              <DetailsByTipo ponto={p} rain24h={rain24h} isAdmin={isAdmin} />
+              <DetailsByTipo ponto={p} isAdmin={isAdmin} />
 
               <div className="mt-3 grid grid-cols-2 gap-2">
                 <button
@@ -367,19 +318,17 @@ function Header({ ponto }: { ponto: Ponto }) {
   return (
     <div className="mb-2 flex items-start justify-between gap-2">
       <div className="min-w-0">
-        <h3 className="font-semibold text-slate-900 truncate">{ponto.nome}</h3>
+        <h3 className="font-semibold text-slate-900 truncate">{ponto.descricao || "Sem descrição"}</h3>
         <p className="text-[11px] text-slate-500">
           ID: <span className="font-mono">{ponto.id}</span>
         </p>
         <p className="text-[11px] text-slate-500">
-          {
-            ponto.is_public ? "Sensor público" : "Sensor privado"
-          }
+          {ponto.is_public ? "Público" : "Privado"}
         </p>
       </div>
 
       <span className="shrink-0 px-2 py-0.5 text-[11px] font-medium capitalize bg-slate-100 text-slate-700">
-        Estação
+        Hidrômetro
       </span>
     </div>
   );
@@ -394,36 +343,22 @@ function BasicInfo({ ponto }: { ponto: Ponto }) {
       <p>
         Lng: <span className="font-mono">{ponto.longitude}</span>
       </p>
-      <p>
-        Última leitura: <span className="font-mono">{formatDateBR(ponto.ultimaLeitura)}</span>
-      </p>
     </div>
   );
 }
 
-function DetailsByTipo({ ponto, rain24h, isAdmin }: { ponto: Ponto; rain24h?: Rain24hState; isAdmin: boolean }) {
-  let chuvaLabel: string | null = null;
-  if (rain24h) {
-    if (rain24h.status === "loading") {
-      chuvaLabel = "Carregando...";
-    } else if (rain24h.status === "ready") {
-      chuvaLabel = `${rain24h.mm.toFixed(2)}mm`;
-    } else if (rain24h.status === "error") {
-      chuvaLabel = "Erro";
-    }
-  }
-
+function DetailsByTipo({ ponto, isAdmin }: { ponto: Ponto; isAdmin: boolean }) {
   const isBlocked = !ponto.isActive && !isAdmin;
 
   if (isBlocked) {
-    const wppMessage = encodeURIComponent(`Olá Uelson! Gostaria de regularizar a situação da minha estação ${ponto.id} (${ponto.nome}).`);
+    const wppMessage = encodeURIComponent(`Olá Uelson! Gostaria de regularizar a situação do meu hidrômetro ${ponto.id} (${ponto.descricao || ""}).`);
 
     return (
       <div className="mt-3 bg-slate-50 border border-slate-200 p-3 text-xs text-slate-700">
-        <div className="font-semibold text-slate-800 mb-2">Resumo (Estação)</div>
-        <div className="text-red-500 mb-1">Estação Bloqueada por pendências comerciais</div>
+        <div className="font-semibold text-slate-800 mb-2">Resumo (Hidrômetro)</div>
+        <div className="text-red-500 mb-1">Hidrômetro Bloqueado por pendências comerciais</div>
         <div className="">
-          Entre em contato com <a href={`https://wa.me/553488103718?text=${wppMessage}`} target="_blank" rel="noopener noreferrer" className="text-blue-500">55 34 8810-3718</a> (Uelson Filho) e regularize sua estação
+          Entre em contato com <a href={`https://wa.me/553488103718?text=${wppMessage}`} target="_blank" rel="noopener noreferrer" className="text-blue-500">55 34 8810-3718</a> (Uelson Filho) e regularize sua situação.
         </div>
       </div>
     );
@@ -431,13 +366,16 @@ function DetailsByTipo({ ponto, rain24h, isAdmin }: { ponto: Ponto; rain24h?: Ra
 
   return (
     <div className="mt-3 bg-slate-50 border border-slate-200 p-3 text-xs text-slate-700">
-      <div className="font-semibold text-slate-800 mb-2">Resumo (Estacao)</div>
+      <div className="font-semibold text-slate-800 mb-2">Detalhes do Hidrômetro</div>
       <ul className="space-y-1">
-        <li>Temperatura: {ponto.temperatura?.toFixed(1) ?? "-"}°C</li>
-        <li>Umidade: {ponto.umidade?.toFixed(1) ?? "-"}%</li>
-        <li>Chuva (24h): {chuvaLabel ?? "-"}</li>
-        <li>Luminosidade: {ponto.luminosidade?.toFixed(1) ?? "-"}</li>
-        <li>Pressao Atm.: {ponto.pressaoAt?.toFixed(1) ?? "-"} hPa</li>
+        <li><strong>Propriedade:</strong> {ponto.nomePropriedade ?? "Não associada"}</li>
+        <li><strong>Outorga:</strong> {ponto.outorgaNumero ?? "Sem outorga ativa"}</li>
+        {ponto.outorgaVencimento && (
+          <li><strong>Vencimento:</strong> {formatDateBR(ponto.outorgaVencimento).split(" ")[0]}</li>
+        )}
+        {ponto.limiteDiario != null && (
+          <li><strong>Limite Diário:</strong> {ponto.limiteDiario.toFixed(2)} m³</li>
+        )}
       </ul>
     </div>
   );

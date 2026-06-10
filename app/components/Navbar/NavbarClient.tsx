@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faLocationDot, faClock, faPhone, faUser, faChartBar, faPlus, faPenToSquare, faSignOut, faBars } from "@fortawesome/free-solid-svg-icons";
+import { faLocationDot, faClock, faPhone, faUser, faPlus, faPenToSquare, faSignOut, faBars, faHouse } from "@fortawesome/free-solid-svg-icons";
 import { faFacebookF, faInstagram } from "@fortawesome/free-brands-svg-icons";
 
 type MeResponse = {
@@ -15,6 +15,12 @@ type MeResponse = {
     emailUsr: string;
     nomeUsr: string;
     role: "admin" | "user";
+    propriedade?: {
+      codProp: string;
+      nomeProp: string;
+      cidadeProp: string;
+      ufProp: string;
+    }[];
   }
 }
 
@@ -85,6 +91,12 @@ export function NavbarClient({ title }: NavbarProps) {
   }
   async function goToHidrometerChange() {
     router.push("/admin/hidrometro/edit");
+  }
+  async function goToMyProperty() {
+    router.push("/propriedade/view");
+  }
+  async function goToNewProperty() {
+    router.push("/propriedade/new");
   }
 
   const normalizedTitle = (title ?? "").toLowerCase();
@@ -168,6 +180,31 @@ export function NavbarClient({ title }: NavbarProps) {
                     <FontAwesomeIcon icon={faUser} className="text-lg text-slate-500" />
                     Conta
                   </button>
+                  {me.propriedade && me.propriedade.length > 0 ? (
+                    <button
+                      type="button"
+                      className="block w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center gap-3"
+                      onClick={() => {
+                        setOpen(false);
+                        goToMyProperty();
+                      }}
+                    >
+                      <FontAwesomeIcon icon={faHouse} className="text-lg text-slate-500" />
+                      {me.propriedade[0].nomeProp}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className="block w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center gap-3"
+                      onClick={() => {
+                        setOpen(false);
+                        goToNewProperty();
+                      }}
+                    >
+                      <FontAwesomeIcon icon={faHouse} className="text-lg text-slate-500" />
+                      Criar propriedade
+                    </button>
+                  )}
                   {me.role === "admin" ? (
                     <>
                       <button
